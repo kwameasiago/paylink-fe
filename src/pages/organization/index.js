@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
@@ -17,6 +17,10 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { CompanyCard } from 'src/sections/companies/company-card';
 import OrganizationForm from 'src/sections/organization/form';
 import { notificationContext } from '../_app';
+import { createOrganization, getOrganizations } from 'src/api/organization';
+import CircularProgress from '@mui/material/CircularProgress';
+
+
 
 const companies = [
   {
@@ -70,88 +74,136 @@ const companies = [
 ];
 
 const Page = () => {
-    const [showForm, setShowForm] = useState(false);
-    const {notify} = useContext(notificationContext);
+  const [showForm, setShowForm] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const { notify } = useContext(notificationContext);
+  const [btnLoader, setBtnLoader] = useState(false);
+  const [organizations, setOrganizations] = useState([]);
 
+
+
+  const getOrg = (alertUser=false) => {
+    setLoader(true)
+    getOrganizations()
+      .then(res => {
+        const { data } = res
+        
+        setOrganizations(data)
+        alertUser&&notify({ msg: 'Operation was a success', type: 'success' })
+        setLoader(false)
+        setShowForm(false);
+      })
+      .catch(err => {
+        alertUser&&notify({ msg: 'Unable to create organization', type: 'error' });
+        setLoader(false)
+        setShowForm(false);
+      })
+  }
+  useEffect(() => {
+    getOrg(true)
+  }, []);
+
+  const create = (data) => {
+    setBtnLoader(true)
+    createOrganization(data)
+      .then(res => {
+        const { data } = res;
+        setBtnLoader(false)
+        notify({ msg: 'Operation was a success', type: 'success' });
+        getOrg()
+      })
+      .catch(err => {
+        setBtnLoader(false)
+        notify({ msg: 'Unable to create organization', type: 'error' })
+      })
+  }
+
+  if(loader){
     return (
-  <>
-    <Head>
-      <title>
-        Organizations | PESA LINK
-      </title>
-    </Head>
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        py: 8
-      }}
-    >
-      <Container maxWidth="xl">
-        <Stack spacing={3}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            spacing={4}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h4">
-                Organizations
-              </Typography>
-              
+      <h1>Loading ...</h1>
+    )
+  }
+
+  return (
+    <>
+      <Head>
+        <title>
+          Organizations | PESA LINK
+        </title>
+      </Head>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          py: 8
+        }}
+      >
+        <Container maxWidth="xl">
+          <Stack spacing={3}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              spacing={4}
+            >
+              <Stack spacing={1}>
+                <Typography variant="h4">
+                  Organizations
+                </Typography>
+
+              </Stack>
+              <div>
+                <Button
+                  startIcon={(
+                    <SvgIcon fontSize="small">
+                      <PlusIcon />
+                    </SvgIcon>
+                  )}
+                  variant="contained"
+                  onClick={() => setShowForm(!showForm)}
+                >
+                  {showForm ? 'View organization' : 'Add organization'}
+                </Button>
+              </div>
             </Stack>
-            <div>
-              <Button
-                startIcon={(
-                  <SvgIcon fontSize="small">
-                    <PlusIcon />
-                  </SvgIcon>
-                )}
-                variant="contained"
-                onClick={() => setShowForm(!showForm)}
-              >
-                {showForm?'View organization': 'Add organization'}
-              </Button>
-            </div>
+            <Grid
+              container
+              spacing={3}
+            >
+              {
+                showForm
+                  ?
+                  <OrganizationForm onSubmit={create} loader={btnLoader} />
+                  :
+                  organizations.map((company) => (
+                    <Grid
+                      xs={12}
+                      md={6}
+                      lg={4}
+                      key={company.id}
+                    >
+                      <CompanyCard company={company} callback={getOrg}/>
+                    </Grid>
+                  ))
+
+              }
+            </Grid>
+            {!showForm && <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Pagination
+                count={3}
+                size="small"
+              />
+            </Box>}
           </Stack>
-          <Grid
-            container
-            spacing={3}
-          >
-            {
-            showForm
-            ?
-                <OrganizationForm onSubmit={(d) => console.log(d)}/>
-            :
-            companies.map((company) => (
-              <Grid
-                xs={12}
-                md={6}
-                lg={4}
-                key={company.id}
-              >
-                <CompanyCard company={company} />
-              </Grid>
-            ))
-            
-            }
-          </Grid>
-          {!showForm&&<Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Pagination
-              count={3}
-              size="small"
-            />
-          </Box>}
-        </Stack>
-      </Container>
-    </Box>
-  </>
-)};
+        </Container>
+      </Box>
+    </>
+  )
+};
 
 Page.getLayout = (page) => (
   <DashboardLayout>

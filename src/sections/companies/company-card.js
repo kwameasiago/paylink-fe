@@ -1,10 +1,28 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ClockIcon from '@heroicons/react/24/solid/ClockIcon';
-import { Avatar, Box, Card, CardContent, Divider, Stack, SvgIcon, Typography } from '@mui/material';
+import { Avatar, Box, Card, CardContent, Divider, Stack, Button, Typography } from '@mui/material';
+import { deleteOrganizations } from 'src/api/organization';
 
 export const CompanyCard = (props) => {
-  const { company } = props;
+  const { company, callback } = props;
+  const [load, setLoad] = useState(false)
+
+  const deleteOrg = (id) => () => {
+    setLoad(true)
+    deleteOrganizations(id)
+    .then(res => {
+      const {data} = res;
+      setLoad(false)
+      callback()
+    })
+    .catch(err => {
+      console.log(err)
+      setLoad(false)
+    })
+  };
+
 
   return (
     <Card
@@ -23,7 +41,7 @@ export const CompanyCard = (props) => {
           }}
         >
           <Avatar
-            src={company.logo}
+            src={'/assets/logos/building.png'}
             variant="square"
           />
         </Box>
@@ -32,7 +50,7 @@ export const CompanyCard = (props) => {
           gutterBottom
           variant="h5"
         >
-          {company.title}
+          {company.name}
         </Typography>
         <Typography
           align="center"
@@ -55,19 +73,20 @@ export const CompanyCard = (props) => {
           direction="row"
           spacing={1}
         >
-          <SvgIcon
-            color="action"
-            fontSize="small"
-          >
-            <ClockIcon />
-          </SvgIcon>
-          <Typography
-            color="text.secondary"
-            display="inline"
-            variant="body2"
-          >
-            Updated 2hr ago
-          </Typography>
+          <Button 
+          onClick={deleteOrg(company.id)}
+          disabled={load}
+          sx={{
+            backgroundColor: 'red',
+            color: '#fff',
+            ':hover': {
+              backgroundColor: 'red',
+            color: '#fff',
+            }
+          }}>
+            {load?'loading ':' Delete'}
+          </Button>
+          
         </Stack>
       </Stack>
     </Card>

@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const OrganizationForm = ({ onSubmit }) => {
+const OrganizationForm = ({ onSubmit, loader }) => {
   const classes = useStyles();
 
   const handleSubmit = (e) => {
@@ -47,7 +47,7 @@ const OrganizationForm = ({ onSubmit }) => {
           />
         </Grid>
         <Grid item xs={12}>
-          <Button type="submit" variant="contained" color="primary">
+          <Button type="submit" variant="contained" color="primary" disabled={loader}>
             Add organization
           </Button>
         </Grid>
